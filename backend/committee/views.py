@@ -134,18 +134,21 @@ def generate_committee_report(request, committee_id):
 
         # Render the HTML template with the context
         html = render_to_string('committee_report_template.html', context)
+        return HttpResponse(html)
 
         # Create a PDF response
-        response = HttpResponse(content_type='application/pdf')
-        response['Content-Disposition'] = f'attachment; filename="committee_report_{committee_id}.pdf"'
-
+        
+ #------------------------------------------------------------------
+#  response = HttpResponse(content_type='application/pdf')
+        # response['Content-Disposition'] = f'attachment; filename="committee_report_{committee_id}.pdf"'
         # Generate PDF
-        pisa_status = pisa.CreatePDF(html, dest=response)
+        # pisa_status = pisa.CreatePDF(html, dest=response)
 
-        # Check for errors
-        if pisa_status.err:
-            return HttpResponse('We had some errors <pre>' + html + '</pre>')
+        # # Check for errors
+        # if pisa_status.err:
+        #     return HttpResponse('We had some errors <pre>' + html + '</pre>')
 
-        return response
+        # return response
+        #------------------------------------------------------------------
     else:
         return HttpResponse('Committee not found', status=404)

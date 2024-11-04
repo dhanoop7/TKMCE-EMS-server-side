@@ -1,4 +1,4 @@
-from django.db import models
+from django.db import models,transaction
 from employee.models import Employee
 from django.utils import timezone
 
@@ -22,6 +22,10 @@ class Committe(models.Model):
             if timezone.now().date() > expiration_date:
                 self.is_active = False
                 self.save()
+                
+                # Set all related CommitteeDetails entries as past members
+                with transaction.atomic():
+                    CommitteeDetails.objects.filter(committee_id=self.id).update(is_past_member=True)
     
     def __str__(self):
         return self.committe_Name if self.committe_Name else "Unnamed Committee"
@@ -43,7 +47,7 @@ class CommitteeDetails(models.Model):
     employee_id = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='committees_employee')
     role = models.CharField(max_length=250)
     score = models.IntegerField()
-    is_past_member = models.BooleanField(default=False)  # Track if the member's role was in a past iteration
+    is_past_member = models.BooleanField(default=False)  
 
     class Meta:
         db_table = 'committee_details'

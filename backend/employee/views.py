@@ -4,11 +4,12 @@ from rest_framework import generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.utils import timezone
-from django.db.models import Q
+from django.db.models import Q,Sum
 from rest_framework import status
 from .models import Designation,Department,Employee,Qualification,EmployeeQualification
 from .serializers import DesignationSerializer,DepartmentSerializer,EmployeeSerializers,QualificationSerializers,EmployeeQualificationSerializers,EmployeefilterSerializers
 from leave_management.models import LeaveDetails
+from committee.models import CommitteeDetails
 
 
 class EmployeeView(APIView):
@@ -92,6 +93,30 @@ class AvailableEmployeeListView(APIView):
         
         return Response(serializer.data, status=status.HTTP_200_OK)
 #view to add filtering options this view will also exclude employees on leave
+    
+
+class EmployeeScoresView(APIView):
+    def get(self, request):
+        
+        employee_scores = (
+            CommitteeDetails.objects
+            .filter(committee_id__is_active=True)
+            .values('employee_id')
+            .annotate(total_score=Sum('score'))
+            .order_by('total_score')  # Ascending order by score
+        )
+
+        # Fetching employee details along with scores
+        response_data = [
+            {
+                'employee_id': emp_score['employee_id'],
+                'employee_name': Employee.objects.get(id=emp_score['employee_id']).name,  # Assuming Employee has a 'name' field
+                'total_score': emp_score['total_score']
+            }
+            for emp_score in employee_scores
+        ]
+
+        return Response(response_data, status=status.HTTP_200_OK)
     
 
 
