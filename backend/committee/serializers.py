@@ -49,7 +49,7 @@ class SubCommitteeSerializerForFetch(serializers.ModelSerializer):
 
     def get_members(self, obj):
         members = CommitteeDetails.objects.filter(subcommittee_id=obj.id)
-        return CommitteeDetailsSerializer(members, many=True).data
+        return CommitteeDetailsSerializerForFetch(members, many=True).data
 
 
 class CommitteSerializerForFetch(serializers.ModelSerializer):
@@ -58,7 +58,7 @@ class CommitteSerializerForFetch(serializers.ModelSerializer):
 
     class Meta:
         model = Committe
-        fields = ['order_number', 'committe_Name', 'order_date', 'order_Text', 'order_Description', 'committe_Expiry', 'sub_committees', 'main_committee_members']
+        fields = ['id','order_number', 'committe_Name', 'order_date', 'order_Text', 'order_Description', 'committe_Expiry', 'sub_committees', 'main_committee_members']
 
     def get_sub_committees(self, obj):
         sub_committees = SubCommittee.objects.filter(committee_id=obj.id)
