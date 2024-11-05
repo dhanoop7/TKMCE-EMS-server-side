@@ -26,70 +26,128 @@ from django.template.loader import render_to_string
 from xhtml2pdf import pisa
 
 
+# class CreateCommittee(APIView):
+#     def post(self, request):
+#         committee_data = request.data.get('committee')
+#         if not committee_data:
+#             return Response({'error': 'Committee data is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+#         subcommittees_data = request.data.get('subcommittees', [])
+#         members_data = request.data.get('members', [])
+
+#         logger.info(f'Received committee data: {committee_data}')
+#         logger.info(f'Received members data: {members_data}')
+#         logger.info(f'Received subcommittees data: {subcommittees_data}')
+
+#         committee_serializer = CommitteSerializer(data=committee_data)
+#         if committee_serializer.is_valid():
+#             with transaction.atomic():
+#                 # Save the main committee
+#                 committee = committee_serializer.save()
+
+#                 # Process main committee members (those without subcommittee_id)
+#                 for member_data in members_data:
+#                     if not member_data.get('subcommittee_id'):
+#                         member_data['committee_id'] = committee.id
+#                         member_serializer = CommitteeDetailsSerializer(data=member_data)
+#                         if member_serializer.is_valid():
+#                             member_serializer.save()
+#                         else:
+#                             return Response({
+#                                 'error': 'Member validation failed.',
+#                                 'details': member_serializer.errors
+#                             }, status=status.HTTP_400_BAD_REQUEST)
+
+#                 # Process each subcommittee and its members
+#                 for sub_data in subcommittees_data:
+#                     sub_data['committee_id'] = committee.id
+#                     subcommittee_serializer = SubCommitteeSerializer(data=sub_data)
+#                     if subcommittee_serializer.is_valid():
+#                         subcommittee = subcommittee_serializer.save()
+
+#                         # Process members specific to this subcommittee
+#                         for member_data in members_data:
+#                             if member_data.get('subcommittee_id') == sub_data.get('subcommittee_id'):
+#                                 member_data['committee_id'] = committee.id
+#                                 member_data['subcommittee_id'] = subcommittee.id
+#                                 member_serializer = CommitteeDetailsSerializer(data=member_data)
+#                                 if member_serializer.is_valid():
+#                                     member_serializer.save()
+#                                 else:
+#                                     return Response({
+#                                         'error': 'Subcommittee member validation failed.',
+#                                         'details': member_serializer.errors
+#                                     }, status=status.HTTP_400_BAD_REQUEST)
+#                     else:
+#                         return Response({
+#                             'error': 'Subcommittee validation failed.',
+#                             'details': subcommittee_serializer.errors
+#                         }, status=status.HTTP_400_BAD_REQUEST)
+
+#             return Response(committee_serializer.data, status=status.HTTP_201_CREATED)
+
+#         return Response({
+#             'error': 'Committee validation failed.',
+#             'details': committee_serializer.errors
+#         }, status=status.HTTP_400_BAD_REQUEST)
+
 class CreateCommittee(APIView):
     def post(self, request):
-        committee_data = request.data.get('committee')
-        if not committee_data:
-            return Response({'error': 'Committee data is required.'}, status=status.HTTP_400_BAD_REQUEST)
+        serializer = CommitteSerializer(data=request.data)
+        if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            return Response({
+                'error': 'Committee validation failed.',
+                'details': serializer.errors
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
 
-        subcommittees_data = request.data.get('subcommittees', [])
-        members_data = request.data.get('members', [])
 
-        logger.info(f'Received committee data: {committee_data}')
-        logger.info(f'Received members data: {members_data}')
-        logger.info(f'Received subcommittees data: {subcommittees_data}')
 
-        committee_serializer = CommitteSerializer(data=committee_data)
-        if committee_serializer.is_valid():
-            with transaction.atomic():
-                # Save the main committee
-                committee = committee_serializer.save()
+class AddMainCommitteeMembers(APIView):
+    def post(self, request):
+        committee_id = request.data.get("committee_id")
+        members = request.data.get("members", [])
 
-                # Process main committee members (those without subcommittee_id)
-                for member_data in members_data:
-                    if not member_data.get('subcommittee_id'):
-                        member_data['committee_id'] = committee.id
-                        member_serializer = CommitteeDetailsSerializer(data=member_data)
-                        if member_serializer.is_valid():
-                            member_serializer.save()
-                        else:
-                            return Response({
-                                'error': 'Member validation failed.',
-                                'details': member_serializer.errors
-                            }, status=status.HTTP_400_BAD_REQUEST)
+        # Check if committee exists
+        try:
+            committee = Committe.objects.get(id=committee_id)
+        except Committe.DoesNotExist:
+            return Response(
+                {"error": "Committee not found."},
+                status=status.HTTP_404_NOT_FOUND
+            )
 
-                # Process each subcommittee and its members
-                for sub_data in subcommittees_data:
-                    sub_data['committee_id'] = committee.id
-                    subcommittee_serializer = SubCommitteeSerializer(data=sub_data)
-                    if subcommittee_serializer.is_valid():
-                        subcommittee = subcommittee_serializer.save()
+        # Add each member to CommitteeDetails
+        errors = []
+        for member in members:
+            serializer = CommitteeDetailsSerializer(data={
+                "committee_id": committee_id,
+                "employee_id": member.get("employee_id"),
+                "role": member.get("role"),
+                "score": member.get("score"),
+                  # Associate member with committee
+            })
+            if serializer.is_valid():
+                serializer.save()
+            else:
+                errors.append({
+                    "employee_id": member.get("employee_id"),
+                    "errors": serializer.errors
+                })
 
-                        # Process members specific to this subcommittee
-                        for member_data in members_data:
-                            if member_data.get('subcommittee_id') == sub_data.get('subcommittee_id'):
-                                member_data['committee_id'] = committee.id
-                                member_data['subcommittee_id'] = subcommittee.id
-                                member_serializer = CommitteeDetailsSerializer(data=member_data)
-                                if member_serializer.is_valid():
-                                    member_serializer.save()
-                                else:
-                                    return Response({
-                                        'error': 'Subcommittee member validation failed.',
-                                        'details': member_serializer.errors
-                                    }, status=status.HTTP_400_BAD_REQUEST)
-                    else:
-                        return Response({
-                            'error': 'Subcommittee validation failed.',
-                            'details': subcommittee_serializer.errors
-                        }, status=status.HTTP_400_BAD_REQUEST)
+        if errors:
+            return Response(
+                {"error": "Some members failed validation.", "details": errors},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
-            return Response(committee_serializer.data, status=status.HTTP_201_CREATED)
+        return Response({"message": "Main committee members added successfully."}, status=status.HTTP_201_CREATED)
 
-        return Response({
-            'error': 'Committee validation failed.',
-            'details': committee_serializer.errors
-        }, status=status.HTTP_400_BAD_REQUEST)
+
+
 
 
 

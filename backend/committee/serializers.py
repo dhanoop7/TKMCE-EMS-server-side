@@ -5,7 +5,7 @@ from employee.models import Employee, Department
 class CommitteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Committe
-        fields = ['order_number', 'committe_Name', 'order_date', 'order_Text', 'order_Description', 'committe_Expiry']
+        fields = ['id', 'order_number', 'committe_Name', 'order_date', 'order_Text', 'order_Description', 'committe_Expiry']
 
 class SubCommitteeSerializer(serializers.ModelSerializer):
     class Meta:
