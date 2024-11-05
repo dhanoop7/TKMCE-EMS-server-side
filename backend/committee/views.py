@@ -147,7 +147,20 @@ class AddMainCommitteeMembers(APIView):
         return Response({"message": "Main committee members added successfully."}, status=status.HTTP_201_CREATED)
 
 
+class SubCommitteeCreateView(APIView):
+    def post(self, request, committee_id):
+        try:
+            committee = Committe.objects.get(id=committee_id)
+        except Committe.DoesNotExist:
+            return Response({"error": "Committee not found."}, status=status.HTTP_404_NOT_FOUND)
 
+        # Create a new SubCommittee instance
+        serializer = SubCommitteeSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(committee_id=committee)  # Set the committee foreign key
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 
