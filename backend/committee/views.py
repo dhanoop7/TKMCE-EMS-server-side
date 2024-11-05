@@ -161,6 +161,28 @@ class SubCommitteeCreateView(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+class AddSubcommitteeMemberView(APIView):
+    def post(self, request, subcommittee_id):
+        # Check if the subcommittee exists
+        try:
+            subcommittee = SubCommittee.objects.get(id=subcommittee_id)
+        except SubCommittee.DoesNotExist:
+            return Response({"error": "Subcommittee not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        # Check if 'members' key is in request data
+        if 'members' not in request.data:
+            return Response({"error": "No members data provided"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Serialize and validate each member's data
+        for member in request.data['members']:
+            serializer = CommitteeDetailsSerializer(data=member)
+            if serializer.is_valid():
+                serializer.save(subcommittee_id=subcommittee)  # Save with the associated subcommittee
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({"message": "Members added successfully"}, status=status.HTTP_201_CREATED)
 
 
 

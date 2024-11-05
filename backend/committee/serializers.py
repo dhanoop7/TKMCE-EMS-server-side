@@ -10,7 +10,7 @@ class CommitteSerializer(serializers.ModelSerializer):
 class SubCommitteeSerializer(serializers.ModelSerializer):
     class Meta:
         model = SubCommittee
-        fields = ['committee_id', 'sub_committee_name', 'sub_committee_Text']
+        fields = ['id','committee_id', 'sub_committee_name', 'sub_committee_Text']
 
 class CommitteeDetailsSerializer(serializers.ModelSerializer):
     class Meta:

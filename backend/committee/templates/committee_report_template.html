@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>TKM College of Engineering - {committee_name}</title>
+    <title>TKM College of Engineering - NBA Accreditation Visit Preparations</title>
     <link rel="stylesheet" href="styles.css">
     <style>
         .general-administration {
@@ -17,6 +17,13 @@
         .order-date {
             margin: 0; /* Remove margin for proper alignment */
         }
+        .sign{
+            text-align: right;
+        }
+        .administration{
+            text-align: center;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body style="font-family: 'Times New Roman', Times, serif;">
@@ -31,8 +38,9 @@
         <p style="text-align: center;">Abstract</p>
         <p style="text-align: left;">{{ committe_name }} - {{ order_text }} <hr style="height:1px; background: black; text-align:left; margin-left:0;"></p>
     </section>
-    
+    <p class="administration"> General Administration</p>
     <section class="general-administration">
+       
         <p class="order-number">{{ order_number }}</p>
         <p class="order-date">{{ order_date }}</p>
     </section>
@@ -43,7 +51,7 @@
         <p>{{ order_description }}</p>
         
         <br>
-        <p style="padding-left: 25px; font-weight: bold; font-size: 18px;"><u>CENTRAL TEAM</u></p>
+        <p style="padding-left: 25px; font-weight: bold; font-size: 18px;"><u>Committe Name :</u></p>
         <ol>
             {% for member in main_members %}
                 <li>{{ member.employee.name }} - {{ member.employee.department_name }}</li>
@@ -55,12 +63,7 @@
                 <li>
                     <h3 style="padding-left: 30px;"><u>{{ sub_committee.sub_committee_name }}</u></h3>
                 </li>
-                <h4 style="line-height: 0.5;">Coordinators:</h4>
-                <ul style="list-style-type: disc; padding-left: 30px; text-align:left;">
-                    {% for member in sub_committee.members %}
-                        <li>{{ member.employee.name }} - {{ member.employee.department_name }}</li>
-                    {% endfor %}
-                </ul>
+                
                 
                 <h4>Members</h4>
                 <ol>
@@ -71,10 +74,11 @@
             {% endfor %}
         </ul>
     </section>
+    <section class="sign" >
+             PRINCIPAL IN-CHARGE
+    </section>
+    <section class="tocpoyto">
+        <p>To&ensp;&ensp;&ensp;&ensp;&ensp;:</p>
+        <p>Copy to :</p>
 
-    <footer>
-        <!-- Footer content can go here -->
-    </footer>
-
-</body>
-</html>
+    </section>
