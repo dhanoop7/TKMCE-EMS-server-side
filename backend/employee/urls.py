@@ -5,8 +5,8 @@ from .views import (DesignationView,
                     EmployeeQualificationView,
                     EmployeeView,
                     QualificationView,
-                    AvailableEmployeeListView,
-                    EmployeeScoresView)
+                    AvailableEmployeeListViewByScore,)
+                    # EmployeeScoresView)
 
 urlpatterns = [
  # Employee endpoints for listing and creating employees
@@ -24,7 +24,7 @@ urlpatterns = [
     # EmployeeQualification endpoints for listing and creating employee qualifications
     path('employee-qualifications/', EmployeeQualificationView.as_view(), name='employee-qualification-list-create'),
 
-    path('filter-employee/', AvailableEmployeeListView.as_view(), name='filter-employee'),
+    # path('filter-employee/', AvailableEmployeeListView.as_view(), name='filter-employee'),
 
-    path('employees-by-score/', EmployeeScoresView.as_view(), name='employees-by-score')
+    path('filter-employee/', AvailableEmployeeListViewByScore.as_view(), name='filter-employee')
 ]

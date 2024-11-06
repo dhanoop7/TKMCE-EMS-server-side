@@ -10,6 +10,8 @@ from .models import Designation,Department,Employee,Qualification,EmployeeQualif
 from .serializers import DesignationSerializer,DepartmentSerializer,EmployeeSerializers,QualificationSerializers,EmployeeQualificationSerializers,EmployeefilterSerializers
 from leave_management.models import LeaveDetails
 from committee.models import CommitteeDetails
+from django.db.models import Sum, Value
+from django.db.models.functions import Coalesce
 
 
 class EmployeeView(APIView):
@@ -70,51 +72,46 @@ class EmployeeQualificationView(APIView):
 
 
 
-class AvailableEmployeeListView(APIView):
-    
-    def get(self, request, *args, **kwargs):
-        # Get the parameters from the request
+class AvailableEmployeeListViewByScore(APIView):
+    def get(self, request):
+        # Get query parameters
         department = request.GET.get('department')
         emp_type = request.GET.get('type')
 
-        # Start with the initial queryset, which defaults to all employees
+        # Start with the base queryset
         queryset = Employee.objects.all()
 
-        # If department is provided and is not empty, filter by department
+        # Apply department filter if provided
         if department:
             queryset = queryset.filter(department_id=department)
 
-        # If emp_type is provided and is valid (numeric), filter by emp_type
+        # Apply employee type filter if provided and valid
         if emp_type and emp_type.isdigit():
             queryset = queryset.filter(type=int(emp_type))
 
-        # Serialize the queryset
-        serializer = EmployeefilterSerializers(queryset, many=True)
-        
-        return Response(serializer.data, status=status.HTTP_200_OK)
-#view to add filtering options this view will also exclude employees on leave
-    
-
-class EmployeeScoresView(APIView):
-    def get(self, request):
-        # Query to get active committee details and calculate total score per employee
-        employee_scores = (
-            CommitteeDetails.objects
-            .filter(committee_id__is_active=True)
-            .values('employee_id')
-            .annotate(total_score=Sum('score'))
-            .order_by('total_score')  # Ascending order by score
+        # Annotate total score, set to 0 if no score exists, and filter active committees only
+        employees_with_scores = (
+            queryset
+            .annotate(
+                total_score=Coalesce(
+                    Sum('committees_employee__score', filter=Q(committees_employee__committee_id__is_active=True)),
+                    Value(0)
+                )
+            )
+            .select_related('department')
+            .order_by('total_score')
         )
 
-        # Fetching employee details, including department name along with scores
+        # Prepare response data
         response_data = [
             {
-                'employee_id': emp_score['employee_id'],
-                'employee_name': Employee.objects.get(id=emp_score['employee_id']).name,
-                'department_name': Employee.objects.get(id=emp_score['employee_id']).department.department_name,  # Assuming Employee has a FK to Department
-                'total_score': emp_score['total_score']
+                'employee_id': emp.id,
+                'employee_name': emp.name,
+                'department_name': emp.department.department_name if emp.department else None,
+                'designation_name': emp.designation.designation_name if emp.department else None,
+                'total_score': emp.total_score
             }
-            for emp_score in employee_scores
+            for emp in employees_with_scores
         ]
 
         return Response(response_data, status=status.HTTP_200_OK)
