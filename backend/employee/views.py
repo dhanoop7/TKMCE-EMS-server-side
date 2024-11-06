@@ -97,7 +97,7 @@ class AvailableEmployeeListView(APIView):
 
 class EmployeeScoresView(APIView):
     def get(self, request):
-        
+        # Query to get active committee details and calculate total score per employee
         employee_scores = (
             CommitteeDetails.objects
             .filter(committee_id__is_active=True)
@@ -106,11 +106,12 @@ class EmployeeScoresView(APIView):
             .order_by('total_score')  # Ascending order by score
         )
 
-        # Fetching employee details along with scores
+        # Fetching employee details, including department name along with scores
         response_data = [
             {
                 'employee_id': emp_score['employee_id'],
-                'employee_name': Employee.objects.get(id=emp_score['employee_id']).name,  # Assuming Employee has a 'name' field
+                'employee_name': Employee.objects.get(id=emp_score['employee_id']).name,
+                'department_name': Employee.objects.get(id=emp_score['employee_id']).department.department_name,  # Assuming Employee has a FK to Department
                 'total_score': emp_score['total_score']
             }
             for emp_score in employee_scores
