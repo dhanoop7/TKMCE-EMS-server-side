@@ -1,14 +1,17 @@
 from django.db import models
 
 class Department(models.Model):
-    # dept_id = models.AutoField(primary_key=True)  # Use AutoField for primary key
+    # dept_id is automatically created as the primary key
     department_name = models.CharField(max_length=100)
+    department_code = models.CharField(max_length=10, null=True, blank=True)  # New field for department code
+    is_active = models.BooleanField(default=True)
 
     class Meta:
         db_table = 'departments'
         verbose_name_plural = 'Departments'
+
     def __str__(self):
-        return self.department_name
+        return f"{self.department_code} - {self.department_name}"
     
 
 class Designation(models.Model):
@@ -27,7 +30,8 @@ class Employee(models.Model):
     TYPE_CHOICES = [
         (0, 'Permanent Teaching'),
         (1, 'Guest Teaching'),
-        (2, 'Non-Teaching'),
+        (2, 'Permanent Non-Teaching'),
+        (3, 'Temporary Non-Teaching'),
     ]
     
     pen = models.CharField(max_length=20)
@@ -36,14 +40,16 @@ class Employee(models.Model):
     name = models.CharField(max_length=255)
     designation = models.ForeignKey(Designation, on_delete=models.SET_NULL, null=True, blank=True)
     department = models.ForeignKey(Department, on_delete=models.SET_NULL, null=True, blank=True)
+    date_of_birth = models.DateField(null=True, blank=True)
     mob_number = models.CharField(max_length=15)
     email = models.EmailField(max_length=100)
     address = models.TextField(null=True, blank=True)
-    type = models.IntegerField(choices=TYPE_CHOICES) 
-
+    type = models.IntegerField(choices=TYPE_CHOICES)
+    date_of_joining = models.DateField(null=True, blank=True)
+    
     def save(self, *args, **kwargs):
         if not self.password:
-            self.password = self.pan
+            self.password = self.pan  # Default password is set to PAN
         super().save(*args, **kwargs)
 
     class Meta:
