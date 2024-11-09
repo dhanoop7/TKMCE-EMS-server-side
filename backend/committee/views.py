@@ -145,6 +145,20 @@ class AddMainCommitteeMembers(APIView):
             )
 
         return Response({"message": "Main committee members added successfully."}, status=status.HTTP_201_CREATED)
+    def delete(self, request,id):
+        committee_detail_id = request.data.get("id")
+
+        # Check if the CommitteeDetails entry exists
+        try:
+            committee_detail = CommitteeDetails.objects.get(id=id)
+            committee_detail.delete()  # Remove the committee member entry
+        except CommitteeDetails.DoesNotExist:
+            return Response(
+                {"error": "Committee member not found."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        return Response({"message": "Member removed successfully."}, status=status.HTTP_204_NO_CONTENT)
 
 
 class SubCommitteeCreateView(APIView):
@@ -189,9 +203,23 @@ class AddSubcommitteeMemberView(APIView):
 class ListCommittees(APIView):
     def get(self, request):
         # Fetch all committees
-        committees = Committe.objects.all()
+        committees = Committe.objects.all().order_by('-id')
         serializer = CommitteSerializerForFetch(committees, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+    
+class EditCommittee(APIView):
+    def put(self, request, committee_id):
+        committee = get_object_or_404(Committe, id=committee_id)
+        serializer = CommitteSerializer(committee, data=request.data, partial=True)
+        
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            return Response({
+                'error': 'Committee validation failed.',
+                'details': serializer.errors
+            }, status=status.HTTP_400_BAD_REQUEST)
     
 
 class CommitteeDetailView(APIView):

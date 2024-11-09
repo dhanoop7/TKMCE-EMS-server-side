@@ -125,6 +125,43 @@ class AvailableEmployeeListViewByScore(APIView):
     
 
 
+class EmployeesInCommitteesView(APIView):
+    def get(self, request):
+        committee_id = request.GET.get('committee_id')
+        department = request.GET.get('department')
+        emp_type = request.GET.get('type')
+
+        # Start with the base queryset for CommitteeDetails, including the related Employee and Committee details
+        queryset = CommitteeDetails.objects.all().select_related('employee_id', 'committee_id', 'subcommittee_id')
+
+        # Apply committee filter if provided (filter by either main committee or subcommittee)
+        if committee_id:
+            queryset = queryset.filter(Q(committee_id=committee_id) | Q(subcommittee_id=committee_id))
+
+        # Apply department filter if provided
+        if department:
+            queryset = queryset.filter(employee_id__department_id=department)
+
+        # Apply employee type filter if provided and valid
+        if emp_type and emp_type.isdigit():
+            queryset = queryset.filter(employee_id__type=emp_type)
+
+        # Prepare response data
+        response_data = [
+            {
+                'employee_id': detail.employee_id.id,
+                'employee_name': detail.employee_id.name,
+                'committee_name': detail.committee_id.committe_Name if detail.committee_id else None,
+                'subcommittee_name': detail.subcommittee_id.sub_committee_name if detail.subcommittee_id else None,
+                'role': detail.role,
+                'score': detail.score
+            }
+            for detail in queryset
+        ]
+
+        return Response(response_data, status=status.HTTP_200_OK)
+
+
 #----filtering employees those are not on leave ----------------------
 # class AvailableEmployeeListView(APIView):
 #     serializer_class = EmployeefilterSerializers
