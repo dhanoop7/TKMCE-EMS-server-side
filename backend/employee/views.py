@@ -89,7 +89,14 @@ class AvailableEmployeeListViewByScore(APIView):
         if emp_type and emp_type.isdigit():
             queryset = queryset.filter(type=int(emp_type))
 
-        # Annotate total score, set to 0 if no score exists, and filter active committees only
+        # Exclude employees who are currently on leave
+        today = timezone.now().date()
+        queryset = queryset.exclude(
+            leave_details__start_date__lte=today,
+            leave_details__end_date__gte=today
+        )
+
+        # Annotate total score, set to 0 if no score exists, and filter active committees 
         employees_with_scores = (
             queryset
             .annotate(
@@ -102,13 +109,13 @@ class AvailableEmployeeListViewByScore(APIView):
             .order_by('total_score')
         )
 
-        # Prepare response data
+        # Preparing response data
         response_data = [
             {
                 'employee_id': emp.id,
                 'employee_name': emp.name,
                 'department_name': emp.department.department_name if emp.department else None,
-                'designation_name': emp.designation.designation_name if emp.department else None,
+                'designation_name': emp.designation.designation_name if emp.designation else None,
                 'total_score': emp.total_score
             }
             for emp in employees_with_scores
