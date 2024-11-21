@@ -12,6 +12,7 @@ from leave_management.models import LeaveDetails
 from committee.models import CommitteeDetails
 from django.db.models import Sum, Value
 from django.db.models.functions import Coalesce
+from collections import defaultdict
 
 
 class EmployeeView(APIView):
@@ -131,33 +132,43 @@ class EmployeesInCommitteesView(APIView):
         department = request.GET.get('department')
         emp_type = request.GET.get('type')
 
-        # Start with the base queryset for CommitteeDetails, including the related Employee and Committee details
+        # Initialize the queryset
         queryset = CommitteeDetails.objects.all().select_related('employee_id', 'committee_id', 'subcommittee_id')
 
-        # Apply committee filter if provided (filter by either main committee or subcommittee)
+        # Apply filters based on query parameters
         if committee_id:
             queryset = queryset.filter(Q(committee_id=committee_id) | Q(subcommittee_id=committee_id))
 
-        # Apply department filter if provided
         if department:
             queryset = queryset.filter(employee_id__department_id=department)
 
-        # Apply employee type filter if provided and valid
         if emp_type and emp_type.isdigit():
             queryset = queryset.filter(employee_id__type=emp_type)
 
-        # Prepare response data
-        response_data = [
-            {
-                'employee_id': detail.employee_id.id,
-                'employee_name': detail.employee_id.name,
+        # Initialize a dictionary to group data by employee
+        employees = defaultdict(lambda: {
+            'employee_id': None,
+            'employee_name': None,
+            'committees': []
+        })
+
+        # Process the queryset to group by employee
+        for detail in queryset:
+            employee = employees[detail.employee_id.id]
+            if not employee['employee_id']:
+                employee['employee_id'] = detail.employee_id.id
+                employee['employee_name'] = detail.employee_id.name
+
+            # Add each committee they are a part of
+            employee['committees'].append({
                 'committee_name': detail.committee_id.committe_Name if detail.committee_id else None,
                 'subcommittee_name': detail.subcommittee_id.sub_committee_name if detail.subcommittee_id else None,
                 'role': detail.role,
                 'score': detail.score
-            }
-            for detail in queryset
-        ]
+            })
+
+        # Prepare the response data
+        response_data = list(employees.values())
 
         return Response(response_data, status=status.HTTP_200_OK)
 

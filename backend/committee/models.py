@@ -3,7 +3,7 @@ from employee.models import Employee
 from django.utils import timezone
 
 class Committe(models.Model):
-    order_number = models.CharField(max_length=150)
+    order_number = models.CharField(max_length=150, unique=True)
     committe_Name = models.CharField(max_length=255, null=True, blank=True)
     order_date = models.DateField(null=True, blank=True)
     order_Text = models.CharField(max_length=500, null=True, blank=True)
