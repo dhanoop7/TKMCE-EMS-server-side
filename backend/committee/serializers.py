@@ -34,7 +34,7 @@ class CommitteeDetailsSerializerForFetch(serializers.ModelSerializer):
 
     class Meta:
         model = CommitteeDetails
-        fields = ['committee_id', 'subcommittee_id', 'employee', 'role', 'score', 'is_past_member']
+        fields = ['id', 'committee_id', 'subcommittee_id', 'employee', 'role', 'score', 'is_past_member']
 
 class SubCommitteeSerializerForFetch(serializers.ModelSerializer):
     members = serializers.SerializerMethodField()

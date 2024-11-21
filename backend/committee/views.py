@@ -237,7 +237,9 @@ def generate_committee_report(request, committee_id):
     # Create an instance of the CommitteeDetailView
     detail_view = CommitteeDetailView()
     response = detail_view.get(request, committee_id)
-
+    receiver_name = request.GET.get('receiver_name')
+    role = request.GET.get('role')
+    
     if response.status_code == status.HTTP_200_OK:
         committee_data = response.data
 
@@ -251,25 +253,14 @@ def generate_committee_report(request, committee_id):
             'committe_expiry': committee_data.get('committe_Expiry'),
             'main_members': committee_data.get('main_committee_members'),
             'sub_committees': committee_data.get('sub_committees'),
+            'role': role,
+            'receiver_name': receiver_name,
+            'is_pdf': True,  # Flag to indicate PDF rendering
         }
 
         # Render the HTML template with the context
         html = render_to_string('committee_report_template.html', context)
         return HttpResponse(html)
 
-        # Create a PDF response
-        
- #------------------------------------------------------------------
-#  response = HttpResponse(content_type='application/pdf')
-        # response['Content-Disposition'] = f'attachment; filename="committee_report_{committee_id}.pdf"'
-        # Generate PDF
-        # pisa_status = pisa.CreatePDF(html, dest=response)
-
-        # # Check for errors
-        # if pisa_status.err:
-        #     return HttpResponse('We had some errors <pre>' + html + '</pre>')
-
-        # return response
-        #------------------------------------------------------------------
     else:
         return HttpResponse('Committee not found', status=404)
