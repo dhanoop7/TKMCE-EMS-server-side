@@ -1,5 +1,16 @@
 from django.urls import path
-from .views import CreateCommittee, ListCommittees, CommitteeDetailView, generate_committee_report, AddMainCommitteeMembers, SubCommitteeCreateView,AddSubcommitteeMemberView, EditCommittee
+from .views import (CreateCommittee, 
+                    ListCommittees, 
+                    CommitteeDetailView, 
+                    generate_committee_report, 
+                    AddMainCommitteeMembers, 
+                    SubCommitteeCreateView, 
+                    AddSubcommitteeMemberView, 
+                    EditCommittee, 
+                    DeleteSubcommitteeMemberView, 
+                    EditSubCommitteeView,
+                    SubCommitteeRetrieveView,
+                    DeleteCommittee,)
 
 urlpatterns = [
     path('create-committee/', CreateCommittee.as_view(), name='create_committee'),
@@ -11,5 +22,9 @@ urlpatterns = [
     path('report/<int:committee_id>/', generate_committee_report, name='committee_report'),
     path('edit/<int:committee_id>/', EditCommittee.as_view(), name='edit-committee'),
     path('committee-detail/<int:id>/delete/', AddMainCommitteeMembers.as_view(), name='committee-detail-delete'),
+    path('delete-committee/<int:committee_id>/', DeleteCommittee.as_view(), name='delete_committee'),
+    path('delete-subcommittee-member/<int:subcommittee_id>/member/<int:member_id>/', DeleteSubcommitteeMemberView.as_view(),name='delete_subcommittee_member'),
+    path('edit-subcommittee/<int:subcommittee_id>/', EditSubCommitteeView.as_view(), name='edit-subcommittee'),
+    path('single-subcommittee/<int:committee_id>/subcommittee/<int:subcommittee_id>/', SubCommitteeRetrieveView.as_view(), name='get_subcommittee'),
 
 ]

@@ -13,7 +13,10 @@ from committee.models import CommitteeDetails
 from django.db.models import Sum, Value
 from django.db.models.functions import Coalesce
 from collections import defaultdict
-
+from django.db.models import Sum, F
+from django.http import HttpResponse
+from openpyxl import Workbook
+from openpyxl.utils import get_column_letter
 
 class EmployeeView(APIView):
     def get(self, request):
@@ -171,6 +174,32 @@ class EmployeesInCommitteesView(APIView):
         response_data = list(employees.values())
 
         return Response(response_data, status=status.HTTP_200_OK)
+    
+
+class EmployeeReportAPIView(APIView):
+    """
+    API View to fetch the employee report with aggregated scores
+    """
+    def get(self, request):
+        try:
+            # Aggregate employee scores
+            data = (
+                CommitteeDetails.objects
+                .filter(committee_id__isnull=False)  # Filter employees who are in a committee
+                .values(employee_name=F('employee_id__name'))  # Get employee name
+                .annotate(total_score=Sum('score'))  # Sum scores per employee
+                .order_by('-total_score')  # Order by highest score
+            )
+
+            # Convert the queryset to a list for the response
+            data_list = list(data)
+
+            # Return JSON response
+            return Response(data_list, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response(
+                {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 #----filtering employees those are not on leave ----------------------

@@ -6,6 +6,7 @@ from .serializers import CommitteSerializer, CommitteeDetailsSerializer, SubComm
 from django.shortcuts import get_object_or_404
 
 
+
 import logging
 logger = logging.getLogger(__name__)
 
@@ -18,6 +19,7 @@ from django.db import transaction
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.exceptions import NotFound
 from .serializers import CommitteSerializer, SubCommitteeSerializer, CommitteeDetailsSerializer, CommitteSerializerForFetch
 
 
@@ -103,6 +105,20 @@ class CreateCommittee(APIView):
                 'details': serializer.errors
             }, status=status.HTTP_400_BAD_REQUEST)
         
+class DeleteCommittee(APIView):
+    def delete(self, request, committee_id):
+        try:
+            # Retrieve the committee by its ID
+            committee = Committe.objects.get(id=committee_id)
+            committee.delete()  # Delete the committee
+            return Response({'message': 'Committee deleted successfully.'}, status=status.HTTP_204_NO_CONTENT)
+        except Committe.DoesNotExist:
+            # If committee doesn't exist, return a 404 not found response
+            raise NotFound(detail="Committee not found.")
+        
+
+
+        
 
 
 
@@ -176,19 +192,52 @@ class SubCommitteeCreateView(APIView):
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
+
+
+class SubCommitteeRetrieveView(APIView):
+    def get(self, request, committee_id, subcommittee_id):
+        try:
+            # Fetch the committee to ensure it exists (optional, if needed)
+            committee = Committe.objects.get(id=committee_id)
+
+            # Fetch the specific subcommittee
+            subcommittee = SubCommittee.objects.get(id=subcommittee_id, committee_id=committee)
+
+        except Committe.DoesNotExist:
+            return Response({"error": "Committee not found."}, status=status.HTTP_404_NOT_FOUND)
+        except SubCommittee.DoesNotExist:
+            return Response({"error": "Subcommittee not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        # Serialize the subcommittee data
+        serializer = SubCommitteeSerializer(subcommittee)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+class EditSubCommitteeView(APIView):
+    def put(self, request, subcommittee_id):
+        try:
+          
+            subcommittee = SubCommittee.objects.get(id=subcommittee_id)
+        except SubCommittee.DoesNotExist:
+            return Response({"error": "Subcommittee not found."}, status=status.HTTP_404_NOT_FOUND)
+
+      
+        serializer = SubCommitteeSerializer(subcommittee, data=request.data, partial=True)  # `partial=True` allows partial updates
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
 class AddSubcommitteeMemberView(APIView):
     def post(self, request, subcommittee_id):
-        # Check if the subcommittee exists
         try:
             subcommittee = SubCommittee.objects.get(id=subcommittee_id)
         except SubCommittee.DoesNotExist:
             return Response({"error": "Subcommittee not found"}, status=status.HTTP_404_NOT_FOUND)
-
-        # Check if 'members' key is in request data
         if 'members' not in request.data:
             return Response({"error": "No members data provided"}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Serialize and validate each member's data
         for member in request.data['members']:
             serializer = CommitteeDetailsSerializer(data=member)
             if serializer.is_valid():
@@ -197,6 +246,27 @@ class AddSubcommitteeMemberView(APIView):
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         return Response({"message": "Members added successfully"}, status=status.HTTP_201_CREATED)
+
+class DeleteSubcommitteeMemberView(APIView):
+    def delete(self, request, subcommittee_id, member_id):
+        """
+        Deletes a member from the specified subcommittee.
+        """
+        try:
+            # Fetching the member associated with the subcommittee
+            member = CommitteeDetails.objects.get(id=member_id, subcommittee_id=subcommittee_id)
+        except CommitteeDetails.DoesNotExist:
+            return Response(
+                {"error": "Member not found in the specified subcommittee"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Delete the member
+        member.delete()
+        return Response(
+            {"message": "Member removed successfully"},
+            status=status.HTTP_200_OK,
+        )
 
 
 

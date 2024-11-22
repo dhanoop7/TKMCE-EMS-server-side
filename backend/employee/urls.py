@@ -6,7 +6,8 @@ from .views import (DesignationView,
                     EmployeeView,
                     QualificationView,
                     AvailableEmployeeListViewByScore,
-                    EmployeesInCommitteesView)
+                    EmployeesInCommitteesView,
+                    EmployeeReportAPIView)
                     # EmployeeScoresView)
 
 urlpatterns = [
@@ -30,5 +31,7 @@ urlpatterns = [
     path('filter-employee/', AvailableEmployeeListViewByScore.as_view(), name='filter-employee'),
 
     path('employees-in-committees/', EmployeesInCommitteesView.as_view(), name='employees-in-committees'),
+
+    path('generate-employee-report/', EmployeeReportAPIView.as_view(), name='generate_employee_report'),
     
 ]
