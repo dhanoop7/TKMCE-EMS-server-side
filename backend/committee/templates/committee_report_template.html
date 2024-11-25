@@ -1,23 +1,27 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <!-- <title>TKM College of Engineering - NBA Accreditation Visit Preparations</title> -->
     <title>{% if not is_pdf %}TKM College of Engineering - NBA Accreditation Visit Preparations{% endif %}</title>
     <link rel="stylesheet" href="styles.css">
     <style>
         .general-administration {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-weight: bold;
-            font-size: 15px;
+            justify-content: space-between; /* Space between left and right elements */
+            align-items: center; /* Center items vertically */
+            font-weight: bold; /* Make text bold */
+            font-size: 15px; /* Set font size */
         }
-        .order-number, .order-date {
-            margin: 0;
+        .order-number {
+            margin: 0; /* Remove margin for proper alignment */
         }
-        .sign {
+        .order-date {
+            margin: 0; /* Remove margin for proper alignment */
+        }
+        .sign{
             text-align: right;
         }
-        .administration {
+        .administration{
             text-align: center;
             font-weight: bold;
         }
@@ -37,6 +41,7 @@
     </section>
     <p class="administration"> General Administration</p>
     <section class="general-administration">
+       
         <p class="order-number">{{ order_number }}</p>
         <p class="order-date">{{ order_date }}</p>
     </section>
@@ -50,8 +55,7 @@
         <p style="padding-left: 25px; font-weight: bold; font-size: 18px;"><u>{{ committe_name }} :</u></p>
         <ol>
             {% for member in main_members %}
-                <li>{{ member.employee.name }} - {{ member.role }} - {{ member.employee.department_name }} - {{ member.score }}
-                </li>
+                <li>{{ member.employee.name }}({{ member.employee.department_name }}) - {{ member.role }}</li>
             {% endfor %}
         </ol>
 
@@ -61,23 +65,21 @@
                     <h3 style="padding-left: 30px;"><u>{{ sub_committee.sub_committee_name }}</u></h3>
                 </li>
                 
+                
                 <h4>Members</h4>
                 <ol>
                     {% for member in sub_committee.members %}
-                        <li>{{ member.employee.name }} - {{ member.role }} - {{ member.employee.department_name }} - {{ member.score }} 
-                        </li>
+                        <li>{{ member.employee.name }}({{ member.employee.department_name }}) - {{ member.role }}</li>
                     {% endfor %}
                 </ol>
             {% endfor %}
         </ul>
     </section>
-    <section class="sign">
-            {{ role }}
+    <section class="sign" >
+          <p>&nbsp;&nbsp;&nbsp;{{role}}</p>  
     </section>
     <section class="tocpoyto">
-        <p>To&ensp;&ensp;&ensp;&ensp;&ensp;:&ensp;  {{ receiver_name }}</p>
-        <p>Copy to :</p>
-    </section>
+        <p>To&ensp;&ensp;&ensp;&ensp;&ensp;:&ensp;{{receiver_name}}</p>
+        <p>Copy to&ensp;&ensp;&ensp;:&ensp;{{copy_name}}</p>
 
-</body>
-</html>
+    </section>

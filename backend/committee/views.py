@@ -308,6 +308,7 @@ def generate_committee_report(request, committee_id):
     detail_view = CommitteeDetailView()
     response = detail_view.get(request, committee_id)
     receiver_name = request.GET.get('receiver_name')
+    copy_name = request.GET.get('copy_name')
     role = request.GET.get('role')
     
     if response.status_code == status.HTTP_200_OK:
@@ -324,6 +325,7 @@ def generate_committee_report(request, committee_id):
             'main_members': committee_data.get('main_committee_members'),
             'sub_committees': committee_data.get('sub_committees'),
             'role': role,
+            'copy_name': copy_name,
             'receiver_name': receiver_name,
             'is_pdf': True,  # Flag to indicate PDF rendering
         }

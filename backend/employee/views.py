@@ -131,9 +131,11 @@ class AvailableEmployeeListViewByScore(APIView):
 
 class EmployeesInCommitteesView(APIView):
     def get(self, request):
+        # Get query parameters
         committee_id = request.GET.get('committee_id')
         department = request.GET.get('department')
         emp_type = request.GET.get('type')
+        search_query = request.GET.get('search')  # New search parameter
 
         # Initialize the queryset
         queryset = CommitteeDetails.objects.all().select_related('employee_id', 'committee_id', 'subcommittee_id')
@@ -147,6 +149,12 @@ class EmployeesInCommitteesView(APIView):
 
         if emp_type and emp_type.isdigit():
             queryset = queryset.filter(employee_id__type=emp_type)
+
+        if search_query:  # Apply search filter
+            queryset = queryset.filter(
+                Q(employee_id__name__icontains=search_query) |
+                Q(employee_id__email__icontains=search_query)  # Example: filter by name or email
+            )
 
         # Initialize a dictionary to group data by employee
         employees = defaultdict(lambda: {
@@ -178,28 +186,100 @@ class EmployeesInCommitteesView(APIView):
 
 class EmployeeReportAPIView(APIView):
     """
-    API View to fetch the employee report with aggregated scores
+    API View to fetch the employee report with aggregated scores, 
+    including employees who are not in any committee, with filtering by type and showing department.
     """
     def get(self, request):
         try:
-            # Aggregate employee scores
-            data = (
+            # Get the 'type' query parameter from the request
+            emp_type = request.GET.get('type')
+            order = request.GET.get('order', 'desc').lower()  # Default to 'desc'
+
+            # Validate 'order' parameter
+            if order not in ['asc', 'desc']:
+                return Response({"error": "Invalid 'order' parameter. Use 'asc' or 'desc'."}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Fetch employees in committees and aggregate scores
+            employees_in_committee = (
                 CommitteeDetails.objects
-                .filter(committee_id__isnull=False)  # Filter employees who are in a committee
-                .values(employee_name=F('employee_id__name'))  # Get employee name
-                .annotate(total_score=Sum('score'))  # Sum scores per employee
-                .order_by('-total_score')  # Order by highest score
+                .filter(committee_id__isnull=False)  # Ensure they are in a committee
+                .values(
+                    employee_unique_id=F('employee_id__id'),  # Unique name for the field
+                    employee_name=F('employee_id__name'),
+                    employee_type=F('employee_id__type'),  # Include type
+                    department_name=F('employee_id__department__department_name')  # Include department name
+                )
+                .annotate(
+                    total_score=Sum('score')  # Aggregate scores
+                )
             )
 
-            # Convert the queryset to a list for the response
-            data_list = list(data)
+            # Fetch employees not in any committee
+            employees_not_in_committee = (
+                Employee.objects
+                .exclude(
+                    id__in=CommitteeDetails.objects.values_list('employee_id', flat=True)  # Exclude those in committees
+                )
+                .values(
+                    employee_unique_id=F('id'),  # Match field naming with the above
+                    employee_name=F('name'),
+                    employee_type=F('type'),  # Include type
+                    department_name=F('department__department_name')  # Include department name
+                )
+                .annotate(
+                    total_score=Value(0)  # Default score for those not in committees
+                )
+            )
 
-            # Return JSON response
-            return Response(data_list, status=status.HTTP_200_OK)
+            # Combine both groups
+            combined_data = list(employees_in_committee) + list(employees_not_in_committee)
+
+            # Filter by type if the query parameter is provided
+            if emp_type is not None:
+                combined_data = [
+                    emp for emp in combined_data if str(emp['employee_type']) == emp_type
+                ]
+
+            # Sort by total_score based on the 'order' parameter (ascending or descending)
+            reverse_sort = True if order == 'desc' else False
+            combined_data = sorted(combined_data, key=lambda x: x['total_score'], reverse=reverse_sort)
+
+            # Generate Excel file
+            wb = Workbook()
+            ws = wb.active
+            ws.title = "Employee Report"
+
+            # Add the header row
+            ws.append([
+                "Employee Name",
+                "Department Name",
+                "Total Score"
+            ])
+
+            # Add the employee data rows
+            for emp in combined_data:
+                ws.append([
+                    emp['employee_name'],
+                    emp['department_name'],
+                    emp['total_score']
+                ])
+
+            # Create an in-memory file buffer
+            response = HttpResponse(content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+            response['Content-Disposition'] = 'attachment; filename=employee_report.xlsx'
+            
+            # Save the workbook to the response
+            wb.save(response)
+
+            return response
+
         except Exception as e:
             return Response(
                 {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+
+
 
 
 #----filtering employees those are not on leave ----------------------
