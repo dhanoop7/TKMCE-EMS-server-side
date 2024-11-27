@@ -7,6 +7,7 @@ from django.shortcuts import get_object_or_404
 
 
 
+
 import logging
 logger = logging.getLogger(__name__)
 
@@ -213,6 +214,7 @@ class SubCommitteeRetrieveView(APIView):
 
         return Response(serializer.data, status=status.HTTP_200_OK)
     
+    
 class EditSubCommitteeView(APIView):
     def put(self, request, subcommittee_id):
         try:
@@ -336,3 +338,66 @@ def generate_committee_report(request, committee_id):
 
     else:
         return HttpResponse('Committee not found', status=404)
+    
+
+# def generate_committee_word(request, committee_id):
+#     # Create an instance of the CommitteeDetailView
+#     detail_view = CommitteeDetailView()
+#     response = detail_view.get(request, committee_id)
+#     receiver_name = request.GET.get('receiver_name')
+#     copy_name = request.GET.get('copy_name')
+#     role = request.GET.get('role')
+
+#     if response.status_code == status.HTTP_200_OK:
+#         committee_data = response.data
+
+#         # Prepare the context with the necessary data
+#         context = {
+#             'order_number': committee_data.get('order_number'),
+#             'committe_name': committee_data.get('committe_Name'), 
+#             'order_date': committee_data.get('order_date'),
+#             'order_text': committee_data.get('order_Text'),
+#             'order_description': committee_data.get('order_Description'),
+#             'committe_expiry': committee_data.get('committe_Expiry'),
+#             'main_members': committee_data.get('main_committee_members'),
+#             'sub_committees': committee_data.get('sub_committees'),
+#             'role': role,
+#             'copy_name': copy_name,
+#             'receiver_name': receiver_name,
+#         }
+
+#         # Render the HTML template with the context
+#         html_content = render_to_string('committee_report_template.html', context)
+
+#         # Parse the HTML content
+#         soup = BeautifulSoup(html_content, 'html.parser')
+
+#         # Create a Word document
+#         document = Document()
+#         document.add_heading('Committee Report', level=1)
+
+#         # Add content to the Word document
+#         for element in soup.descendants:
+#             if element.name == 'h1':
+#                 document.add_heading(element.text, level=1)
+#             elif element.name == 'h2':
+#                 document.add_heading(element.text, level=2)
+#             elif element.name == 'p':
+#                 document.add_paragraph(element.text)
+#             elif element.name == 'ul':  # Handle unordered lists
+#                 for li in element.find_all('li'):
+#                     document.add_paragraph(f"• {li.text}", style='List Bullet')
+
+#         # Convert the Word document to a binary stream
+#         file_stream = BytesIO()
+#         document.save(file_stream)
+#         file_stream.seek(0)
+
+#         # Serve the Word document as an HTTP response
+#         response = HttpResponse(file_stream, content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+#         response['Content-Disposition'] = f'attachment; filename=committee_report_{committee_id}.docx'
+
+#         return response
+
+#     else:
+#         return HttpResponse('Committee not found', status=404)
