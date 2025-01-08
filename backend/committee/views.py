@@ -93,6 +93,8 @@ from xhtml2pdf import pisa
 #             'details': committee_serializer.errors
 #         }, status=status.HTTP_400_BAD_REQUEST)
 
+#signup github
+
 class CreateCommittee(APIView):
     def post(self, request):
         serializer = CommitteSerializer(data=request.data)
